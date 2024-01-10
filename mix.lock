@@ -1,0 +1,3 @@
+%{
+  "merkle_tree": {:hex, :merkle_tree, "2.0.0", "84a9cbfd3d8fab545d69c320460ff713ddea2f64ec4c14edfcc4f8eba899d5ab", [:mix], [], "hexpm", "351a764e385ce75bd782a972fc9597d99bed4d692631903e4a08936d4939c895"},
+}
