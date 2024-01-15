@@ -9,16 +9,19 @@ defmodule GitElixir do
     case args do
       [path, command | _rest] ->
         IO.puts("path: #{path}\ncommand: #{command}")
+        LocalIo.put_env_field(:path, path)
+        LocalIo.put_env_field(:command, command)
+        IO.puts("---------------------")
 
         case command do
           "init" ->
             IO.puts("initializing project")
-            {result, msg} = Commands.init()
+            {result, msg} = Commands.init(path)
             IO.puts("result: #{result}   msg: #{msg}")
 
           "diff" ->
             IO.puts("getting diff for project")
-            {result, msg} = Commands.diff()
+            {result, msg} = Commands.diff(path)
 
             with :ok <- result,
                  diff_msg when is_binary(msg) <- msg do
@@ -33,7 +36,7 @@ defmodule GitElixir do
 
           "commit" ->
             IO.puts("committing changes")
-            Commands.commit()
+            Commands.commit(path)
 
           "t" ->
             IO.puts("testing")

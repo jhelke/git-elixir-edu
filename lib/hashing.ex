@@ -9,21 +9,22 @@ defmodule Hashing do
     :crypto.hash(:sha256, data) |> Base.encode16()
   end
 
-  defp hash_file_content(file_path) do
+  defp hash_file_content(_file_path) do
     {:error, "hashing of file content not implemented"}
   end
 
-  def hash_folder(file_path) do
-    IO.puts("hashing folder #{inspect(file_path)}")
+  def hash_folder(folder_path) do
+    # must use folder_path argument for recursion
+
     # get folders and files in dir
-    {:ok, entries} = ls(file_path)
-    dirs_to_process = []
+    {:ok, entries} = ls(folder_path)
     child_roots = []
 
     # hash folders and files in this folder
+    IO.puts("hashing folder #{inspect(folder_path)}")
     hashed_entries =
       Enum.reduce(entries, [], fn entry, acc ->
-        full_path = Path.join(file_path, entry)
+        full_path = Path.join(folder_path, entry)
 
         if String.contains?(
              full_path,
@@ -53,7 +54,7 @@ defmodule Hashing do
     %{root: merkle_tree.root, child_roots: child_roots}
   end
 
-  def hash_project(file_path) do
+  def hash_project do
     # get files and directories in project root
     project_root_path = LocalIo.get_project_root()
 
@@ -70,14 +71,10 @@ end
 
 defmodule LocalIo do
   @moduledoc """
-  Documentation for `GitElixir`.
+  Documentation for `LocalIo`. LocalIo offers functions to manage local settings, state, and DiskIo.
   """
   def parent_git_elixir_exists(current_dir, root_dir \\ "/") do
-    project_root_path = Application.get_env(:app_context, :project_root_path)
-
-    if is_binary(project_root_path) do
-      {true, project_root_path}
-    end
+    # must use current_dir argument for recursion
 
     if current_dir == root_dir do
       {false, nil}
@@ -93,7 +90,8 @@ defmodule LocalIo do
   end
 
   def get_project_root do
-    case parent_git_elixir_exists(File.cwd!()) do
+    path = get_env_field(:path)
+    case parent_git_elixir_exists(path) do
       {true, project_root} -> project_root
       {false, _} -> :error
       {_, _} -> :error
@@ -113,11 +111,12 @@ defmodule LocalIo do
   end
 
   def get_config_file_path do
-    {result, path} = parent_git_elixir_exists(File.cwd!())
+    path = get_env_field(:path)
+    {result, project_root} = parent_git_elixir_exists(path)
 
     case result do
       true ->
-        config_file_path = Path.join([path, ".git_elixir", "git_elixir.conf"])
+        config_file_path = Path.join([project_root, ".git_elixir", "git_elixir.conf"])
 
         {:ok, config_file_path}
 
@@ -149,7 +148,7 @@ defmodule LocalIo do
     updated_config = Map.put(config, key, value)
 
     File.write(
-      @config_file,
+      get_config_file_path(),
       Enum.map_join(updated_config, "\n", fn {k, v} -> "#{k}=#{v}" end)
     )
   end

@@ -20,27 +20,31 @@ defmodule LocalStorage do
   defp determine_latest_hashes do
     commits_path = LocalIo.get_commits_path()
 
-    commits_path
+    commits = commits_path
     |> File.ls!()
     |> Enum.map(fn commit_file ->
       full_path = Path.join(commits_path, commit_file)
       {commit_file, File.stat!(full_path).mtime}
     end)
-    |> Enum.max_by(fn {_commit_file, mtime} -> mtime end)
-    |> case do
-      {latest_commit_file, _mtime} ->
-        {:ok, latest_commit_file}
 
-      nil ->
-        {:error, "no latest_commit_file found"}
+    if Enum.empty?(commits) do
+      {:error, "no existing commit found"}
+    else
+      commits
+      |> Enum.max_by(fn {_commit_file, mtime} -> mtime end)
+      |> case do
+        {latest_commit_file, _mtime} ->
+          {:ok, latest_commit_file}
+
+        _ ->
+          {:error, "failed to determine latest commit"}
+      end
     end
   end
 
   def save_hashes(diff) do
     project_root_path = LocalIo.get_project_root()
-    git_elixir_path = Path.join(project_root_path, ".git_elixir")
     IO.puts("project_root_path: " <> project_root_path)
-    IO.puts("git_elixir_path: " <> git_elixir_path)
 
     project_state = ProjectState.collect_folder_state(project_root_path)
     IO.puts(inspect(diff))
