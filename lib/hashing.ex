@@ -27,9 +27,12 @@ defmodule Hashing do
         full_path = Path.join(folder_path, entry)
 
         if String.contains?(
-             full_path,
-             Path.join(LocalIo.get_project_root(), ".git_elixir")
-           ) do
+             full_path, Path.join(LocalIo.get_project_root(), ".git_elixir")
+           ) or
+           String.ends_with?(
+            full_path, Path.join(LocalIo.get_project_root(), "/.git")
+           )
+           do
           acc
         else
           case stat!(full_path) do
